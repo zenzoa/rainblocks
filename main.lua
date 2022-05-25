@@ -4,6 +4,7 @@
 -- 4-line celebration
 -- mino images
 -- animated background scenes
+-- high score
 
 import "CoreLibs/object"
 import "CoreLibs/graphics"
@@ -36,6 +37,9 @@ setup = function()
 	end)
 	levelOption = menu:addOptionsMenuItem("level", stage.levelStrings, stage.levelStrings[1], function(option)
 		currentStage:setLevel(math.tointeger(option), true)
+	end)
+	ghostOption = menu:addCheckmarkMenuItem("ghost", currentStage.enableGhost, function(value)
+		currentStage.enableGhost = value
 	end)
 end
 
@@ -92,7 +96,9 @@ end
 
 playdate.update = function()
 	playdate.graphics.clear()
+
 	currentStage:draw()
+
 	gfx.sprite.update()
 	playdate.timer.updateTimers()
 end
