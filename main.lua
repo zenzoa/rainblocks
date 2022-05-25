@@ -55,6 +55,7 @@ end
 
 playdate.upButtonDown = function()
 	if currentStage.enableHold then
+		currentStage.tickTimer:pause()
 		upHoldTimer = playdate.timer.performAfterDelay(currentStage.holdDelay, function()
 			currentStage:switchHold()
 		end)
@@ -64,6 +65,7 @@ playdate.upButtonDown = function()
 end
 
 playdate.upButtonUp = function()
+	currentStage.tickTimer:start()
 	if currentStage.enableHold and upHoldTimer.timeLeft > 0 then
 		upHoldTimer:remove()
 		currentStage:hardDrop()

@@ -133,31 +133,31 @@ local stage = {
 			end,
 
 			shiftLeft = function(self)
-				if self.tetromino and not self.isHardDropping then
+				if self.tetromino then
 					local success = self.tetromino:moveLeft(self)
 				end
 			end,
 
 			shiftRight = function(self)
-				if self.tetromino and not self.isHardDropping then
+				if self.tetromino then
 					local success = self.tetromino:moveRight(self)
 				end
 			end,
 
 			rotateClockwise = function(self)
-				if self.tetromino and not self.isHardDropping then
+				if self.tetromino then
 					local success = self.tetromino:rotateClockwise(self)
 				end
 			end,
 
 			rotateCounterClockwise = function(self)
-				if self.tetromino and not self.isHardDropping then
+				if self.tetromino then
 					local success = self.tetromino:rotateCounterClockwise(self)
 				end
 			end,
 
 			startSoftDrop = function(self)
-				if self.tetromino and not self.isHardDropping then
+				if self.tetromino then
 					self.tickTimer.duration = math.floor(self.speed / 20)
 				end
 			end,
@@ -171,7 +171,7 @@ local stage = {
 			hardDrop = function(self)
 				if self.tetromino then
 					self.isHardDropping = true
-					self.tickTimer.duration = 1
+					self:tick()
 				end
 			end,
 
@@ -188,11 +188,7 @@ local stage = {
 
 			lock = function(self)
 				self.isWaitingForHoldLock = false
-
-				if self.isHardDropping then
-					self.isHardDropping = false
-					self.tickTimer.duration = self.speed
-				end
+				self.isHardDropping = false
 
 				if self.lockTimer then
 					self.lockTimer:remove()
@@ -295,14 +291,21 @@ local stage = {
 			tick = function(self)
 				if self.tetromino then
 
-					local success = self.tetromino:moveDown(self)
+					local success = false
+					if self.isHardDropping then
+						while self.tetromino:moveDown(self) do
+							-- nothing, we're hard-dropping until we hit the bottom
+						end
+					else
+						success = self.tetromino:moveDown(self)
+					end
 
 					if success then
 						if self.lockTimer then
 							self.lockTimer:remove()
 							self.lockTimer = nil
 						end
-					else
+					elseif not self.lockTimer then
 						local lockDelay = self.lockDelay
 						if self.isHardDropping then
 							lockDelay = 1
