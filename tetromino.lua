@@ -11,14 +11,14 @@ local tetromino = {
 		"O",
 	},
 
-	size = {
-		I = { 4, 4 },
-		J = { 3, 3 },
-		L = { 3, 3 },
-		S = { 3, 3 },
-		Z = { 3, 3 },
-		T = { 3, 3 },
-		O = { 4, 3 },
+	width = {
+		I = 4,
+		J = 3,
+		L = 3,
+		S = 3,
+		Z = 3,
+		T = 3,
+		O = 3,
 	},
 
 	pattern = {
@@ -182,6 +182,21 @@ local tetromino = {
 		},
 	},
 
+	images = {},
+
+	loadImages = function(self)
+		self.images = {
+			playdate.graphics.image.new('images/block2.png'),
+			playdate.graphics.image.new('images/block6.png'),
+			playdate.graphics.image.new('images/block7.png'),
+			playdate.graphics.image.new('images/block4.png'),
+			playdate.graphics.image.new('images/block5.png'),
+			playdate.graphics.image.new('images/block1.png'),
+			playdate.graphics.image.new('images/block3.png'),
+			ghost = playdate.graphics.image.new('images/block0.png')
+		}
+	end,
+
 	create = function(type, x, y)
 		local t = {
 
@@ -255,7 +270,7 @@ local tetromino = {
 				if not rotationIndex then
 					rotationIndex = self.rotationIndex
 				end
-				local pattern = tetromino.pattern[self.type]
+				local pattern = Tetromino.pattern[self.type]
 				local rotation = pattern[rotationIndex]
 				for row = 1, #rotation do
 					for col = 1, #rotation[row] do
@@ -277,25 +292,25 @@ local tetromino = {
 				return false
 			end,
 
-			drawMino = function(self, tx, ty)
-				local x = tx * tetromino.minoSize
-				local y = ty * tetromino.minoSize
+			drawMino = function(self, tx, ty, blockIndex)
+				local x = tx * Tetromino.minoSize
+				local y = ty * Tetromino.minoSize
 				if self.isGhost then
-					playdate.graphics.drawRect(x, y, tetromino.minoSize - 1, tetromino.minoSize - 1)
+					Tetromino.images.ghost:draw(x, y)
 				else
-					playdate.graphics.fillRect(x, y, tetromino.minoSize - 1, tetromino.minoSize - 1)
+					Tetromino.images[blockIndex]:draw(x, y)
 				end
 			end,
 
 			draw = function(self, x, y)
-				local pattern = tetromino.pattern[self.type]
+				local pattern = Tetromino.pattern[self.type]
 				local rotation = pattern[self.rotationIndex]
 				for row = 1, #rotation do
 					for col = 1, #rotation[row] do
 						if rotation[row][col] > 0 then
 							x = self.x + col - 2
 							y = self.y + row - 4
-							self:drawMino(x, y)
+							self:drawMino(x, y, rotation[row][col])
 						end
 					end
 				end

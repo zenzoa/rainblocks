@@ -38,6 +38,10 @@ local stage = {
 			sceneIndex = 1,
 
 			setup = function(self)
+				self.levelLabelWidth = playdate.graphics.getTextSize("LEVEL")
+				self.levelTextWidth = playdate.graphics.getTextSize(self.level)
+				self.holdLabelWidth = playdate.graphics.getTextSize("HOLD")
+
 				for row = 1, self.height do
 					self.tiles[row] = {}
 					for col = 1, self.width do
@@ -57,7 +61,7 @@ local stage = {
 			setMode = function(self, mode)
 				if self.mode ~= mode then
 					self.mode = mode
-					modeOption:setValue(mode)
+					ModeOption:setValue(mode)
 				end
 			end,
 
@@ -71,27 +75,27 @@ local stage = {
 						level = self.level
 					end
 
-					if level > stage.maxLevel then
-						level = stage.maxLevel
+					if level > Stage.maxLevel then
+						level = Stage.maxLevel
 					end
 
 					self.level = level
 
-					self.speed = stage.speeds[level]
+					self.speed = Stage.speeds[level]
 					if self.tickTimer then
 						self.tickTimer.duration = self.speed
 					end
  
 					if not setManually then
-						levelOption:setValue(stage.levelStrings[level])
+						LevelOption:setValue(Stage.levelStrings[level])
 					end
 				end
 			end,
 
 			resetBag = function(self)
 				self.bag = {}
-				for i = 1, #tetromino.types do
-					table.insert(self.bag, tetromino.types[i])
+				for i = 1, #Tetromino.types do
+					table.insert(self.bag, Tetromino.types[i])
 				end
 				for i = #self.bag, 2, -1 do
 					local j = math.random(i)
@@ -116,15 +120,15 @@ local stage = {
 					y = 1
 				end
 				
-				self.tetromino = tetromino.create(type, x, y)
+				self.tetromino = Tetromino.create(type, x, y)
 
 				if self.enableGhost then
-					self.ghost = tetromino.create(type, x, y)
+					self.ghost = Tetromino.create(type, x, y)
 					self.ghost.isGhost = true
 				end
 
 				if self.enablePreview then
-					self.preview = tetromino.create(self.bag[1], 0, 0)
+					self.preview = Tetromino.create(self.bag[1], 0, 0)
 				end
 
 				if not self.tetromino:moveDown(self) then
@@ -237,7 +241,6 @@ local stage = {
 			end,
 
 			clearLine = function(self, y)
-				print("clear line " .. y)
 				for row = y, 2, -1 do
 					for col = 1, self.width do
 						self.tiles[row][col] = self.tiles[row - 1][col]
@@ -246,7 +249,7 @@ local stage = {
 			end,
 
 			tetrominoToTiles = function(self)
-				local pattern = tetromino.pattern[self.tetromino.type]
+				local pattern = Tetromino.pattern[self.tetromino.type]
 				local rotation = pattern[self.tetromino.rotationIndex]
 				for row = 1, #rotation do
 					for col = 1, #rotation[row] do
@@ -318,47 +321,47 @@ local stage = {
 				end
 			end,
 
-			drawTile = function(self, tx, ty)
-				local x = tx * tetromino.minoSize
-				local y = ty * tetromino.minoSize
-				playdate.graphics.fillRect(x, y, tetromino.minoSize - 1, tetromino.minoSize - 1) 
+			drawTile = function(self, tx, ty, blockIndex)
+				local x = tx * Tetromino.minoSize
+				local y = ty * Tetromino.minoSize
+				Tetromino.images[blockIndex]:draw(x, y)
 			end,
 
 			draw = function(self)
-				local displayWidth = self.width * tetromino.minoSize
-				local displayHeight = self.visibleHeight * tetromino.minoSize
+				local displayWidth = self.width * Tetromino.minoSize
+				local displayHeight = self.visibleHeight * Tetromino.minoSize
 
 				if self.score > self.scoreDisplay then
-					if self.score - self.scoreDisplay >= 1000 then
+					if self.score - self.scoreDisplay >= 100 then
 						self.scoreDisplay = math.min(self.score, self.scoreDisplay + 100)
 					else
 						self.scoreDisplay = math.min(self.score, self.scoreDisplay + 10)
 					end
 				end
-				playdate.graphics.drawText("Score", displayWidth + 10, displayHeight - 40)
-				playdate.graphics.drawText(self.scoreDisplay, displayWidth + 10, displayHeight - 20)
+				playdate.graphics.drawText("SCORE", displayWidth + 10, displayHeight - 26)
+				playdate.graphics.drawText(self.scoreDisplay, displayWidth + 10, displayHeight - 10)
 
-				playdate.graphics.drawText("Level", -50, displayHeight - 40)
-				playdate.graphics.drawText(self.level, -50, displayHeight - 20)
+				playdate.graphics.drawText("LEVEL", -self.levelLabelWidth - 10, displayHeight - 26)
+				playdate.graphics.drawText(self.level, -self.levelTextWidth - 10, displayHeight - 10)
 
 				if self.enablePreview then
-					playdate.graphics.drawText("Next", displayWidth + 10, 0)
+					playdate.graphics.drawText("NEXT", displayWidth + 10, 0)
 					if self.preview then
 						self.preview.x = self.width + 2
-						self.preview.y = 6
+						self.preview.y = 5
 						self.preview:draw()
 					end
 				end
 
 				if self.enableHold then
-					playdate.graphics.drawText("Hold", -50, 0)
+					playdate.graphics.drawText("HOLD", -self.holdLabelWidth - 10, 0)
 					if self.hold then
-						self.hold.x = -4
-						self.hold.y = 6
+						self.hold.x = -Tetromino.width[self.hold.type]
+						self.hold.y = 5
 						self.hold:draw()
 					end
 				end
-				
+
 				playdate.graphics.setClipRect(0, 0, displayWidth, displayHeight)
 				playdate.graphics.drawRect(0, 0, displayWidth, displayHeight)
 
@@ -376,10 +379,10 @@ local stage = {
 
 				for row = 1, self.height do
 					for col = 1, self.width do
-						if self.tiles[row][col] ~= 0 then
+						if self.tiles[row][col] > 0 then
 							local x = col - 1
 							local y = row - 3
-							self:drawTile(x, y)
+							self:drawTile(x, y, self.tiles[row][col])
 						end
 					end
 				end

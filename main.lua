@@ -2,7 +2,6 @@
 -- game over animation / option to restart
 -- line clear confetti
 -- 4-line celebration
--- mino images
 -- animated background scenes
 -- high score
 
@@ -11,34 +10,41 @@ import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
 
-tetromino = import "tetromino"
-stage = import "stage"
+Tetromino = import "tetromino"
+Stage = import "stage"
 
 local gfx <const> = playdate.graphics
 
+local currentStage
 local buttonRepeatTimerLeft = nil
 local buttonRepeatTimerRight = nil
 local upHoldTimer = nil
+local defaultFont
 
-setup = function()
+local setup = function()
 	math.randomseed(playdate.getSecondsSinceEpoch())
-	currentStage = stage.create()
+
+	defaultFont = playdate.graphics.font.new("fonts/krull")
+	playdate.graphics.setFont(defaultFont)
+
+	Tetromino:loadImages()
+	currentStage = Stage.create()
 
 	local width, height = playdate.display.getSize()
-	local stageWidth = (currentStage.width * tetromino.minoSize)
-	local stageHeight = (currentStage.visibleHeight * tetromino.minoSize)
+	local stageWidth = (currentStage.width * Tetromino.minoSize)
+	local stageHeight = (currentStage.visibleHeight * Tetromino.minoSize)
 	local offsetX = math.floor((width - stageWidth) / 2)
 	local offsetY = math.floor((height - stageHeight) / 2)
 	playdate.graphics.setDrawOffset(offsetX, offsetY)
 
 	local menu = playdate.getSystemMenu()
-	modeOption = menu:addOptionsMenuItem("mode", { "regular", "dynamic", "chill" }, "regular", function(option)
+	ModeOption = menu:addOptionsMenuItem("mode", { "regular", "dynamic", "chill" }, "regular", function(option)
 		currentStage:setMode(option)
 	end)
-	levelOption = menu:addOptionsMenuItem("level", stage.levelStrings, stage.levelStrings[1], function(option)
+	LevelOption = menu:addOptionsMenuItem("level", Stage.levelStrings, Stage.levelStrings[1], function(option)
 		currentStage:setLevel(math.tointeger(option), true)
 	end)
-	ghostOption = menu:addCheckmarkMenuItem("ghost", currentStage.enableGhost, function(value)
+	GhostOption = menu:addCheckmarkMenuItem("ghost", currentStage.enableGhost, function(value)
 		currentStage.enableGhost = value
 	end)
 end
