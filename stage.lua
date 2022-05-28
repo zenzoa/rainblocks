@@ -33,6 +33,8 @@ local stage = {
 			holdDelay = 500,
 			isHardDropping = false,
 			isWaitingForHoldLock = false,
+			highestLine = 22,
+			prevHighestLine = 22,
 
 			mode = "regular",
 			sceneIndex = 1,
@@ -119,7 +121,7 @@ local stage = {
 				if type == "I" then
 					y = 1
 				end
-				
+
 				self.tetromino = Tetromino.create(type, x, y)
 
 				if self.enableGhost then
@@ -206,7 +208,18 @@ local stage = {
 					self:calculateScore(lineCount)
 					if self:checkForLockOut() then
 						self:gameOver()
+					else
+						self:checkForSlowDown()
 					end
+				end
+			end,
+
+			checkForSlowDown = function(self)
+				if self.mode == "dynamic" and self.level > 1 and
+					self.highestLine < self.prevHighestLine and
+					self.highestLine <= 6
+					then
+						self:setLevel(self.level - 1)
 				end
 			end,
 
@@ -224,12 +237,18 @@ local stage = {
 			end,
 
 			checkForLines = function(self)
+				self.prevHighestLine = self.highestLine
+				self.highestLine = self.height
 				local lineCount = 0
 				for row = 3, self.height do
 					local isLine = true
 					for col = 1, self.width do
 						if self.tiles[row][col] == 0 then
 							isLine = false
+						else
+							if row < self.highestLine then
+								self.highestLine = row
+							end
 						end
 					end
 					if isLine then
@@ -332,8 +351,10 @@ local stage = {
 				local displayHeight = self.visibleHeight * Tetromino.minoSize
 
 				if self.score > self.scoreDisplay then
-					if self.score - self.scoreDisplay >= 100 then
+					if self.score - self.scoreDisplay >= 1000 then
 						self.scoreDisplay = math.min(self.score, self.scoreDisplay + 100)
+					elseif self.score - self.scoreDisplay >= 100 then
+						self.scoreDisplay = math.min(self.score, self.scoreDisplay + 20)
 					else
 						self.scoreDisplay = math.min(self.score, self.scoreDisplay + 10)
 					end
@@ -362,8 +383,8 @@ local stage = {
 					end
 				end
 
+				playdate.graphics.drawRect(-2, -2, displayWidth + 3, displayHeight + 3)
 				playdate.graphics.setClipRect(0, 0, displayWidth, displayHeight)
-				playdate.graphics.drawRect(0, 0, displayWidth, displayHeight)
 
 				if self.tetromino then
 					if self.ghost and self.enableGhost then
