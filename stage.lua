@@ -3,7 +3,7 @@ local stage = {
 	levelStrings =	{	"01",	"02",	"03",	"04",	"05",	"06",	"07",	"08",	"09",	"10"	},
 	speeds =				{	1000,	793,	618,	473,	355,	262,	190,	135,	94,		64		},
 
-	create = function()
+	create = function(scenes)
 		local s = {
 			width = 10,
 			height = 22,
@@ -16,7 +16,7 @@ local stage = {
 			hold = nil,
 			enableGhost = true,
 			ghost = nil,
-			
+
 			tiles = {},
 			bag = {},
 
@@ -24,6 +24,7 @@ local stage = {
 			scoreDisplay = 0,
 			combo = -1,
 			linesCleared = 0,
+			fourLinesCleared = 0,
 			level = 1,
 
 			speed = 1000,
@@ -36,8 +37,26 @@ local stage = {
 			highestLine = 22,
 			prevHighestLine = 22,
 
-			mode = "regular",
+			mode = "dynamic",
+
+			scenes = scenes,
 			sceneIndex = 1,
+
+			soundEffects = {
+				shift = playdate.sound.sampleplayer.new("sounds/shift"),
+				rotate = playdate.sound.sampleplayer.new("sounds/rotate"),
+				hold = playdate.sound.sampleplayer.new("sounds/hold"),
+				softDrop = playdate.sound.sampleplayer.new("sounds/softDrop"),
+				hardDrop = playdate.sound.sampleplayer.new("sounds/hardDrop"),
+				collide = playdate.sound.sampleplayer.new("sounds/collide"),
+				land = playdate.sound.sampleplayer.new("sounds/land"),
+				lock = playdate.sound.sampleplayer.new("sounds/lock"),
+				lineClear1 = playdate.sound.sampleplayer.new("sounds/lineClear1"),
+				lineClear2 = playdate.sound.sampleplayer.new("sounds/lineClear2"),
+				lineClear3 = playdate.sound.sampleplayer.new("sounds/lineClear3"),
+				lineClear4 = playdate.sound.sampleplayer.new("sounds/lineClear4"),
+				gameOver = playdate.sound.sampleplayer.new("sounds/gameOver")
+			},
 
 			setup = function(self)
 				self.levelLabelWidth = playdate.graphics.getTextSize("LEVEL")
@@ -53,11 +72,25 @@ local stage = {
 				self.tickTimer = playdate.timer.new(self.speed, function() self:tick() end)
 				self.tickTimer.repeats = true
 				self:resetBag()
+
+				self.sceneIndex = 1
+				self.scenes[self.sceneIndex]:open()
 			end,
 
 			gameOver = function(self)
-				print("GAME OVER")
+				self.scenes[self.sceneIndex]:close()
+				self.soundEffects.gameOver:play()
 				self.tickTimer:remove()
+			end,
+
+			nextStage = function(self)
+				local oldSceneIndex = self.sceneIndex
+				self.sceneIndex = self.sceneIndex + 1
+				if self.sceneIndex > #self.scenes then
+					self.sceneIndex = 1
+				end
+				self.scenes[oldSceneIndex]:close()
+				self.scenes[self.sceneIndex]:open()
 			end,
 
 			setMode = function(self, mode)
@@ -69,10 +102,6 @@ local stage = {
 
 			setLevel = function(self, level, setManually)
 				if level ~= self.level then
-					if level > self.level and not setManually then
-						-- sceneIndex = sceneIndex + 1
-					end
-
 					if self.mode == "chill" and not setManually then
 						level = self.level
 					end
@@ -87,7 +116,7 @@ local stage = {
 					if self.tickTimer then
 						self.tickTimer.duration = self.speed
 					end
- 
+
 					if not setManually then
 						LevelOption:setValue(Stage.levelStrings[level])
 					end
@@ -141,35 +170,57 @@ local stage = {
 			shiftLeft = function(self)
 				if self.tetromino then
 					local success = self.tetromino:moveLeft(self)
+					if success then
+						self.soundEffects.shift:play()
+					else
+						self.soundEffects.collide:play()
+					end
 				end
 			end,
 
 			shiftRight = function(self)
 				if self.tetromino then
 					local success = self.tetromino:moveRight(self)
+					if success then
+						self.soundEffects.shift:play()
+					else
+						self.soundEffects.collide:play()
+					end
 				end
 			end,
 
 			rotateClockwise = function(self)
 				if self.tetromino then
 					local success = self.tetromino:rotateClockwise(self)
+					if success then
+						self.soundEffects.rotate:play()
+					else
+						self.soundEffects.collide:play()
+					end
 				end
 			end,
 
 			rotateCounterClockwise = function(self)
 				if self.tetromino then
 					local success = self.tetromino:rotateCounterClockwise(self)
+					if success then
+						self.soundEffects.rotate:play()
+					else
+						self.soundEffects.collide:play()
+					end
 				end
 			end,
 
 			startSoftDrop = function(self)
 				if self.tetromino then
+					self.soundEffects.softDrop:play(0)
 					self.tickTimer.duration = math.floor(self.speed / 20)
 				end
 			end,
 
 			stopSoftDrop = function(self)
 				if self.tetromino then
+					self.soundEffects.softDrop:stop()
 					self.tickTimer.duration = self.speed
 				end
 			end,
@@ -183,6 +234,7 @@ local stage = {
 
 			switchHold = function(self)
 				if self.enableHold and not self.isWaitingForHoldLock then
+					self.soundEffects.hold:play()
 					if self.hold then
 						table.insert(self.bag, 1, self.hold.type)
 						self.isWaitingForHoldLock = true
@@ -193,9 +245,6 @@ local stage = {
 			end,
 
 			lock = function(self)
-				self.isWaitingForHoldLock = false
-				self.isHardDropping = false
-
 				if self.lockTimer then
 					self.lockTimer:remove()
 					self.lockTimer = nil
@@ -206,12 +255,25 @@ local stage = {
 					self.tetromino = nil
 					local lineCount = self:checkForLines()
 					self:calculateScore(lineCount)
+
 					if self:checkForLockOut() then
 						self:gameOver()
 					else
 						self:checkForSlowDown()
+						if lineCount == 0 then
+							if self.isHardDropping then
+								self.soundEffects.hardDrop:play()
+							else
+								self.soundEffects.lock:play()
+							end
+						elseif 1 <= lineCount and lineCount <= 4 then
+							self.soundEffects["lineClear" .. lineCount]:play()
+						end
 					end
 				end
+				
+				self.isWaitingForHoldLock = false
+				self.isHardDropping = false
 			end,
 
 			checkForSlowDown = function(self)
@@ -307,6 +369,14 @@ local stage = {
 					self:setLevel(self.level + 1)
 				end
 
+				if lineCount >= 4 then
+					self.fourLinesCleared = self.fourLinesCleared + 1
+					if self.fourLinesCleared >= 2 then
+						self.fourLinesCleared = 0
+						self:nextStage()
+					end
+				end
+
 				self.score = self.score + score
 			end,
 
@@ -331,6 +401,8 @@ local stage = {
 						local lockDelay = self.lockDelay
 						if self.isHardDropping then
 							lockDelay = 1
+						else
+							self.soundEffects.land:play()
 						end
 						self.lockTimer = playdate.timer.new(lockDelay, function() self:lock() end)
 					end

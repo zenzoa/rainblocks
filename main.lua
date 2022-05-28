@@ -12,6 +12,7 @@ import "CoreLibs/timer"
 
 Tetromino = import "tetromino"
 Stage = import "stage"
+Scene = import "scene"
 
 local gfx <const> = playdate.graphics
 
@@ -19,7 +20,10 @@ local currentStage
 local buttonRepeatTimerLeft = nil
 local buttonRepeatTimerRight = nil
 local upHoldTimer = nil
+
 local defaultFont
+
+local scenes = {}
 
 local setup = function()
 	math.randomseed(playdate.getSecondsSinceEpoch())
@@ -27,8 +31,18 @@ local setup = function()
 	defaultFont = playdate.graphics.font.new("fonts/krull")
 	playdate.graphics.setFont(defaultFont)
 
+	scenes = {
+		Scene.create("something_in_the_air"),
+		Scene.create("glad_to_be_stuck_inside"),
+		Scene.create("mundane"),
+		Scene.create("pretty_little_lies"),
+		Scene.create("shut_up_or_shut_in"),
+		Scene.create("yesterday"),
+		Scene.create("whatever"),
+	}
+
 	Tetromino:loadImages()
-	currentStage = Stage.create()
+	currentStage = Stage.create(scenes)
 
 	local width, height = playdate.display.getSize()
 	local stageWidth = (currentStage.width * Tetromino.minoSize)
@@ -38,7 +52,7 @@ local setup = function()
 	playdate.graphics.setDrawOffset(offsetX, offsetY)
 
 	local menu = playdate.getSystemMenu()
-	ModeOption = menu:addOptionsMenuItem("mode", { "regular", "dynamic", "chill" }, "regular", function(option)
+	ModeOption = menu:addOptionsMenuItem("mode", { "regular", "dynamic", "chill" }, currentStage.mode, function(option)
 		currentStage:setMode(option)
 	end)
 	LevelOption = menu:addOptionsMenuItem("level", Stage.levelStrings, Stage.levelStrings[1], function(option)

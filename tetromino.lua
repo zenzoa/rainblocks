@@ -238,7 +238,7 @@ local tetromino = {
 				if newRotationIndex > 4 then
 					newRotationIndex = 1
 				end
-				self:rotate(stage, newRotationIndex)
+				return self:rotate(stage, newRotationIndex)
 			end,
 
 			rotateCounterClockwise = function(self, stage)
@@ -246,7 +246,7 @@ local tetromino = {
 				if newRotationIndex < 1 then
 					newRotationIndex = 4
 				end
-				self:rotate(stage, newRotationIndex)
+				return self:rotate(stage, newRotationIndex)
 			end,
 
 			rotate = function(self, stage, newRotationIndex)
