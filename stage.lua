@@ -37,10 +37,19 @@ local stage = {
 			highestLine = 22,
 			prevHighestLine = 22,
 
+			isGameOver = false,
+			fillSpeed = 1,
+			fillTimer = nil,
+			fillRow = 22,
+			fillCol = 1,
+
 			mode = "dynamic",
 
 			scenes = scenes,
 			sceneIndex = 1,
+
+			levelLabelWidth = playdate.graphics.getTextSize("LEVEL"),
+			holdLabelWidth = playdate.graphics.getTextSize("HOLD"),
 
 			soundEffects = {
 				shift = playdate.sound.sampleplayer.new("sounds/shift"),
@@ -59,28 +68,53 @@ local stage = {
 			},
 
 			setup = function(self)
-				self.levelLabelWidth = playdate.graphics.getTextSize("LEVEL")
-				self.levelTextWidth = playdate.graphics.getTextSize(self.level)
-				self.holdLabelWidth = playdate.graphics.getTextSize("HOLD")
+				self.isGameOver = false
 
+				self.score = 0
+				self.scoreDisplay = 0
+				self.combo = -1
+				self.linesCleared = 0
+				self.fourLinesCleared = 0
+				self.highestLine = 2
+				self.prevHighestLine = 22
+
+				self.tetromino = nil
+				self.hold = nil
+				self.preview = nil
+				self.ghost = nil
+
+				self.sceneIndex = 1
+				self.scenes[self.sceneIndex]:open()
+
+				if self.mode ~= "chill" then
+					self:setLevel(1, true)
+				end
+
+				self.tiles = {}
 				for row = 1, self.height do
 					self.tiles[row] = {}
 					for col = 1, self.width do
 						self.tiles[row][col] = 0
 					end
 				end
-				self.tickTimer = playdate.timer.new(self.speed, function() self:tick() end)
-				self.tickTimer.repeats = true
+
 				self:resetBag()
 
-				self.sceneIndex = 1
-				self.scenes[self.sceneIndex]:open()
+				self.tickTimer = playdate.timer.new(self.speed, function() self:tick() end)
+				self.tickTimer.repeats = true
 			end,
 
 			gameOver = function(self)
+				self.isGameOver = true
 				self.scenes[self.sceneIndex]:close()
 				self.soundEffects.gameOver:play()
 				self.tickTimer:remove()
+				self.tetromino = nil
+
+				self.fillRow = 22
+				self.fillCol = 1
+				self.fillTimer = playdate.timer.new(self.fillSpeed, function() self:fill() end)
+				self.fillTimer.repeats = true
 			end,
 
 			nextStage = function(self)
@@ -152,18 +186,19 @@ local stage = {
 				end
 
 				self.tetromino = Tetromino.create(type, x, y)
+				if self.tetromino:checkCollision(self, 0, 0) then
+					self:gameOver()
+				else
+					if self.enableGhost then
+						self.ghost = Tetromino.create(type, x, y)
+						self.ghost.isGhost = true
+					end
 
-				if self.enableGhost then
-					self.ghost = Tetromino.create(type, x, y)
-					self.ghost.isGhost = true
-				end
+					if self.enablePreview then
+						self.preview = Tetromino.create(self.bag[1], 0, 0)
+					end
 
-				if self.enablePreview then
-					self.preview = Tetromino.create(self.bag[1], 0, 0)
-				end
-
-				if not self.tetromino:moveDown(self) then
-					self:gameOver() -- block out
+					self:tick()
 				end
 			end,
 
@@ -271,7 +306,7 @@ local stage = {
 						end
 					end
 				end
-				
+
 				self.isWaitingForHoldLock = false
 				self.isHardDropping = false
 			end,
@@ -412,6 +447,34 @@ local stage = {
 				end
 			end,
 
+			fill = function(self)
+				self.tiles[self.fillRow][self.fillCol] = math.random(1, 7)
+
+				if self.fillRow % 2 == 0 then
+					self.fillCol = self.fillCol + 1
+				else
+					self.fillCol = self.fillCol - 1
+				end
+
+				if self.fillCol < 1 or self.fillCol > self.width then
+					self.fillRow = self.fillRow - 1
+					if self.fillRow % 2 == 0 then
+						self.fillCol = 1
+					else
+						self.fillCol = self.width
+					end
+					if self.fillRow > 2 then
+						self.soundEffects.collide:play()
+					end
+				end
+
+				if self.fillRow <= 2 then
+					self.soundEffects.land:play()
+					self.fillTimer:remove()
+					self.fillTimer = nil
+				end
+			end,
+
 			drawTile = function(self, tx, ty, blockIndex)
 				local x = tx * Tetromino.minoSize
 				local y = ty * Tetromino.minoSize
@@ -435,6 +498,7 @@ local stage = {
 				playdate.graphics.drawText(self.scoreDisplay, displayWidth + 10, displayHeight - 10)
 
 				playdate.graphics.drawText("LEVEL", -self.levelLabelWidth - 10, displayHeight - 26)
+				self.levelTextWidth = playdate.graphics.getTextSize(self.level)
 				playdate.graphics.drawText(self.level, -self.levelTextWidth - 10, displayHeight - 10)
 
 				if self.enablePreview then

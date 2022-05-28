@@ -1,5 +1,4 @@
 -- TODO:
--- game over animation / option to restart
 -- line clear confetti
 -- 4-line celebration
 -- animated background scenes
@@ -66,7 +65,11 @@ end
 setup()
 
 playdate.AButtonDown = function()
-	currentStage:rotateClockwise()
+	if currentStage.isGameOver and not currentStage.fillTimer then
+		currentStage:setup()
+	else
+		currentStage:rotateClockwise()
+	end
 end
 
 playdate.BButtonDown = function()
