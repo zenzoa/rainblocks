@@ -9,11 +9,10 @@ import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
 
+Gfx = playdate.graphics
 Tetromino = import "tetromino"
 Stage = import "stage"
 Scene = import "scene"
-
-local gfx <const> = playdate.graphics
 
 local currentStage
 local buttonRepeatTimerLeft = nil
@@ -27,8 +26,8 @@ local scenes = {}
 local setup = function()
 	math.randomseed(playdate.getSecondsSinceEpoch())
 
-	defaultFont = playdate.graphics.font.new("fonts/krull")
-	playdate.graphics.setFont(defaultFont)
+	defaultFont = Gfx.font.new("fonts/krull")
+	Gfx.setFont(defaultFont)
 
 	scenes = {
 		Scene.create("something_in_the_air"),
@@ -48,7 +47,7 @@ local setup = function()
 	local stageHeight = (currentStage.visibleHeight * Tetromino.minoSize)
 	local offsetX = math.floor((width - stageWidth) / 2)
 	local offsetY = math.floor((height - stageHeight) / 2)
-	playdate.graphics.setDrawOffset(offsetX, offsetY)
+	Gfx.setDrawOffset(offsetX, offsetY)
 
 	local menu = playdate.getSystemMenu()
 	ModeOption = menu:addOptionsMenuItem("mode", { "regular", "dynamic", "chill" }, currentStage.mode, function(option)
@@ -120,10 +119,9 @@ playdate.rightButtonUp = function()
 end
 
 playdate.update = function()
-	playdate.graphics.clear()
+	Gfx.clear()
 
 	currentStage:draw()
 
-	gfx.sprite.update()
 	playdate.timer.updateTimers()
 end

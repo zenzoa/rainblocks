@@ -186,23 +186,23 @@ local tetromino = {
 
 	loadImages = function(self)
 		self.images = {
-			playdate.graphics.image.new('images/block2.png'),
-			playdate.graphics.image.new('images/block6.png'),
-			playdate.graphics.image.new('images/block7.png'),
-			playdate.graphics.image.new('images/block4.png'),
-			playdate.graphics.image.new('images/block5.png'),
-			playdate.graphics.image.new('images/block1.png'),
-			playdate.graphics.image.new('images/block3.png'),
-			ghost = playdate.graphics.image.new('images/block0.png')
+			Gfx.image.new('images/block2.png'),
+			Gfx.image.new('images/block6.png'),
+			Gfx.image.new('images/block7.png'),
+			Gfx.image.new('images/block4.png'),
+			Gfx.image.new('images/block5.png'),
+			Gfx.image.new('images/block1.png'),
+			Gfx.image.new('images/block3.png'),
+			ghost = Gfx.image.new('images/block0.png')
 		}
 	end,
 
-	create = function(type, x, y)
+	create = function(type, xStart, yStart)
 		local t = {
 
 			type = type,
-			x = x,
-			y = y,
+			x = xStart,
+			y = yStart,
 			rotationIndex = 1,
 			isGhost = false,
 
@@ -292,9 +292,14 @@ local tetromino = {
 				return false
 			end,
 
-			drawMino = function(self, tx, ty, blockIndex)
+			drawMino = function(self, tx, ty, blockIndex, drawBackground)
 				local x = tx * Tetromino.minoSize
 				local y = ty * Tetromino.minoSize
+				if drawBackground then
+					Gfx.setColor(Gfx.kColorWhite)
+					Gfx.fillRoundRect(x - 1, y - 1, Tetromino.minoSize + 1, Tetromino.minoSize + 1, 1)
+					Gfx.setColor(Gfx.kColorBlack)
+				end
 				if self.isGhost then
 					Tetromino.images.ghost:draw(x, y)
 				else
@@ -302,15 +307,15 @@ local tetromino = {
 				end
 			end,
 
-			draw = function(self, x, y)
+			draw = function(self, drawBackground)
 				local pattern = Tetromino.pattern[self.type]
 				local rotation = pattern[self.rotationIndex]
 				for row = 1, #rotation do
 					for col = 1, #rotation[row] do
 						if rotation[row][col] > 0 then
-							x = self.x + col - 2
-							y = self.y + row - 4
-							self:drawMino(x, y, rotation[row][col])
+							local x = self.x + col - 2
+							local y = self.y + row - 4
+							self:drawMino(x, y, rotation[row][col], drawBackground)
 						end
 					end
 				end

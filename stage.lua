@@ -48,8 +48,8 @@ local stage = {
 			scenes = scenes,
 			sceneIndex = 1,
 
-			levelLabelWidth = playdate.graphics.getTextSize("LEVEL"),
-			holdLabelWidth = playdate.graphics.getTextSize("HOLD"),
+			levelLabelWidth = Gfx.getTextSize("LEVEL"),
+			holdLabelWidth = Gfx.getTextSize("HOLD"),
 
 			soundEffects = {
 				shift = playdate.sound.sampleplayer.new("sounds/shift"),
@@ -269,12 +269,15 @@ local stage = {
 
 			switchHold = function(self)
 				if self.enableHold and not self.isWaitingForHoldLock then
+					self.isHardDropping = false
+					self.tickTimer.duration = self.speed
 					self.soundEffects.hold:play()
 					if self.hold then
 						table.insert(self.bag, 1, self.hold.type)
 						self.isWaitingForHoldLock = true
 					end
 					self.hold = self.tetromino
+					self.hold.rotationIndex = 1
 					self:spawnTetromino()
 				end
 			end,
@@ -482,8 +485,12 @@ local stage = {
 			end,
 
 			draw = function(self)
+				self.scenes[self.sceneIndex]:draw()
+
 				local displayWidth = self.width * Tetromino.minoSize
 				local displayHeight = self.visibleHeight * Tetromino.minoSize
+
+				-- Gfx.setImageDrawMode(Gfx.kDrawModeNXOR)
 
 				if self.score > self.scoreDisplay then
 					if self.score - self.scoreDisplay >= 1000 then
@@ -494,33 +501,40 @@ local stage = {
 						self.scoreDisplay = math.min(self.score, self.scoreDisplay + 10)
 					end
 				end
-				playdate.graphics.drawText("SCORE", displayWidth + 10, displayHeight - 26)
-				playdate.graphics.drawText(self.scoreDisplay, displayWidth + 10, displayHeight - 10)
+				Gfx.drawText("SCORE", displayWidth + 10, displayHeight - 26)
+				Gfx.drawText(self.scoreDisplay, displayWidth + 10, displayHeight - 10)
 
-				playdate.graphics.drawText("LEVEL", -self.levelLabelWidth - 10, displayHeight - 26)
-				self.levelTextWidth = playdate.graphics.getTextSize(self.level)
-				playdate.graphics.drawText(self.level, -self.levelTextWidth - 10, displayHeight - 10)
+				Gfx.drawText("LEVEL", -self.levelLabelWidth - 10, displayHeight - 26)
+				self.levelTextWidth = Gfx.getTextSize(self.level)
+				Gfx.drawText(self.level, -self.levelTextWidth - 10, displayHeight - 10)
 
 				if self.enablePreview then
-					playdate.graphics.drawText("NEXT", displayWidth + 10, 0)
-					if self.preview then
-						self.preview.x = self.width + 2
-						self.preview.y = 5
-						self.preview:draw()
-					end
+					Gfx.drawText("NEXT", displayWidth + 10, 0)
 				end
 
 				if self.enableHold then
-					playdate.graphics.drawText("HOLD", -self.holdLabelWidth - 10, 0)
-					if self.hold then
-						self.hold.x = -Tetromino.width[self.hold.type]
-						self.hold.y = 5
-						self.hold:draw()
-					end
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 10, 0)
 				end
 
-				playdate.graphics.drawRect(-2, -2, displayWidth + 3, displayHeight + 3)
-				playdate.graphics.setClipRect(0, 0, displayWidth, displayHeight)
+				-- Gfx.setImageDrawMode(Gfx.kDrawModeCopy)
+
+				if self.enablePreview and self.preview then
+					self.preview.x = self.width + 2
+					self.preview.y = 5
+					self.preview:draw(true)
+				end
+
+				if self.enableHold and self.hold then
+					self.hold.x = -Tetromino.width[self.hold.type]
+					self.hold.y = 5
+					self.hold:draw(true)
+				end
+
+				Gfx.setColor(Gfx.kColorWhite)
+				Gfx.fillRect(-3, -3, displayWidth + 5, displayHeight + 5)
+				Gfx.setColor(Gfx.kColorBlack)
+				Gfx.drawRect(-2, -2, displayWidth + 3, displayHeight + 3)
+				Gfx.setClipRect(0, 0, displayWidth, displayHeight)
 
 				if self.tetromino then
 					if self.ghost and self.enableGhost then
