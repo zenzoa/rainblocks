@@ -314,12 +314,59 @@ local stage = {
 				self.isHardDropping = false
 			end,
 
+			countAirBubbles = function(self)
+				local airBubbles = 0
+				local lastAirBubbleRow = 0
+				local tilesLookedAt = {}
+				for row = 1, self.height do
+					local rowTiles = {}
+					for col = 1, self.width do
+						table.insert(rowTiles, false)
+					end
+					table.insert(tilesLookedAt, rowTiles)
+				end
+
+				local lookAtTile
+				lookAtTile = function(row, col)
+					if self.tiles[row][col] == 0 and not tilesLookedAt[row][col] then
+						tilesLookedAt[row][col] = true
+						if row - 1 >= 1 then
+							lookAtTile(row - 1, col)
+						end
+						if row + 1 <= self.height then
+							lookAtTile(row + 1, col)
+						end
+						if col - 1 >= 1 then
+							lookAtTile(row, col - 1)
+						end
+						if col + 1 <= self.width then
+							lookAtTile(row, col + 1)
+						end
+					end
+				end
+
+				for row = 1, self.height do
+					for col = 1, self.width do
+						if self.tiles[row][col] == 0 and not tilesLookedAt[row][col] then
+							if row > lastAirBubbleRow then
+								airBubbles = airBubbles + 1
+								lastAirBubbleRow = row
+							end
+							lookAtTile(row, col)
+						end
+					end
+				end
+
+				return airBubbles - 1
+			end,
+
 			checkForSlowDown = function(self)
-				if self.mode == "dynamic" and self.level > 1 and
-					self.highestLine < self.prevHighestLine and
-					self.highestLine <= 6
-					then
+				if self.mode == "dynamic" and self.level > 1  then
+					local airBubbles = self:countAirBubbles()
+					local newMaxLevel = Stage.maxLevel - (airBubbles - 1)
+					if self.level > newMaxLevel then
 						self:setLevel(self.level - 1)
+					end
 				end
 			end,
 

@@ -20,7 +20,6 @@ local scene = {
 				self.animationTimer:remove()
 			end,
 			nextFrame = function(self)
-				print("nextframe")
 				self.bgImageIndex = self.bgImageIndex + 1
 				if self.bgImageIndex > self.bgImageTable:getLength() then
 					self.bgImageIndex = 1
