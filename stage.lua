@@ -22,6 +22,7 @@ local stage = {
 			tiles = {},
 			bag = {},
 
+			highScore = 0,
 			score = 0,
 			scoreDisplay = 0,
 			combo = -1,
@@ -448,6 +449,10 @@ local stage = {
 				end
 
 				self.score = self.score + score
+
+				if self.score > self.highScore then
+					self.highScore = self.score
+				end
 			end,
 
 			tick = function(self)
@@ -604,6 +609,30 @@ local stage = {
 					end
 				end
 
+			end,
+
+			saveData = function(self)
+				playdate.datastore.write({
+					highScore = self.highScore,
+					mode = self.mode,
+					level = self.level
+				})
+			end,
+
+			loadData = function(self)
+				local data = playdate.datastore.read()
+				if data ~= nil then
+					if data.highScore ~= nil then
+						self.highScore = data.highScore
+					end
+					if data.mode ~= nil then
+						self:setMode(data.mode)
+					end
+					if data.level ~= nil then
+						self:setLevel(data.level, true)
+						LevelOption:setValue(Stage.levelStrings[data.level])
+					end
+				end
 			end,
 		}
 

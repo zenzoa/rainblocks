@@ -80,6 +80,7 @@ local setup = function()
 end
 
 setup()
+currentStage:loadData()
 
 playdate.AButtonDown = function()
 	if currentStage.isGameOver and not currentStage.fillTimer then
@@ -144,4 +145,12 @@ playdate.update = function()
 	currentStage:draw()
 
 	playdate.timer.updateTimers()
+end
+
+playdate.gameWillTerminate = function()
+	currentStage:saveData()
+end
+
+playdate.deviceWillSleep = function()
+	currentStage:saveData()
 end
