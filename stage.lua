@@ -3,8 +3,10 @@ local stage = {
 	levelStrings =	{	"01",	"02",	"03",	"04",	"05",	"06",	"07",	"08",	"09",	"10"	},
 	speeds =				{	1000,	793,	618,	473,	355,	262,	190,	135,	94,		64		},
 
-	create = function(scenes)
+	create = function(nextSong)
 		local s = {
+			nextSong = nextSong,
+
 			width = 10,
 			height = 22,
 			visibleHeight = 20,
@@ -45,9 +47,6 @@ local stage = {
 
 			mode = "dynamic",
 
-			scenes = scenes,
-			sceneIndex = 1,
-
 			levelLabelWidth = Gfx.getTextSize("LEVEL"),
 			holdLabelWidth = Gfx.getTextSize("HOLD"),
 
@@ -83,9 +82,6 @@ local stage = {
 				self.preview = nil
 				self.ghost = nil
 
-				self.sceneIndex = 1
-				self.scenes[self.sceneIndex]:open()
-
 				if self.mode ~= "chill" then
 					self:setLevel(1, true)
 				end
@@ -106,7 +102,6 @@ local stage = {
 
 			gameOver = function(self)
 				self.isGameOver = true
-				self.scenes[self.sceneIndex]:close()
 				self.soundEffects.gameOver:play()
 				self.tickTimer:remove()
 				self.tetromino = nil
@@ -115,16 +110,6 @@ local stage = {
 				self.fillCol = 1
 				self.fillTimer = playdate.timer.new(self.fillSpeed, function() self:fill() end)
 				self.fillTimer.repeats = true
-			end,
-
-			nextStage = function(self)
-				local oldSceneIndex = self.sceneIndex
-				self.sceneIndex = self.sceneIndex + 1
-				if self.sceneIndex > #self.scenes then
-					self.sceneIndex = 1
-				end
-				self.scenes[oldSceneIndex]:close()
-				self.scenes[self.sceneIndex]:open()
 			end,
 
 			setMode = function(self, mode)
@@ -458,7 +443,7 @@ local stage = {
 					self.fourLinesCleared = self.fourLinesCleared + 1
 					if self.fourLinesCleared >= 2 then
 						self.fourLinesCleared = 0
-						self:nextStage()
+						self:nextSong()
 					end
 				end
 
@@ -532,12 +517,8 @@ local stage = {
 			end,
 
 			draw = function(self)
-				self.scenes[self.sceneIndex]:draw()
-
 				local displayWidth = self.width * Tetromino.minoSize
 				local displayHeight = self.visibleHeight * Tetromino.minoSize
-
-				-- Gfx.setImageDrawMode(Gfx.kDrawModeNXOR)
 
 				if self.score > self.scoreDisplay then
 					if self.score - self.scoreDisplay >= 1000 then
@@ -556,14 +537,32 @@ local stage = {
 				Gfx.drawText(self.level, -self.levelTextWidth - 10, displayHeight - 10)
 
 				if self.enablePreview then
+					playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillWhite)
+					Gfx.drawText("NEXT", displayWidth + 9, -1)
+					Gfx.drawText("NEXT", displayWidth + 9, 0)
+					Gfx.drawText("NEXT", displayWidth + 9, 1)
+					Gfx.drawText("NEXT", displayWidth + 11, -1)
+					Gfx.drawText("NEXT", displayWidth + 11, 0)
+					Gfx.drawText("NEXT", displayWidth + 11, 1)
+					Gfx.drawText("NEXT", displayWidth + 10, -1)
+					Gfx.drawText("NEXT", displayWidth + 10, 1)
+					playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeCopy)
 					Gfx.drawText("NEXT", displayWidth + 10, 0)
 				end
 
 				if self.enableHold then
+					playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillWhite)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 9, -1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 9, 0)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 9, 1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 11, -1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 11, 0)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 11, 1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 10, -1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 10, 1)
+					playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeCopy)
 					Gfx.drawText("HOLD", -self.holdLabelWidth - 10, 0)
 				end
-
-				-- Gfx.setImageDrawMode(Gfx.kDrawModeCopy)
 
 				if self.enablePreview and self.preview then
 					self.preview.x = self.width + 2

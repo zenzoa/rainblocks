@@ -1,7 +1,6 @@
 -- TODO:
 -- line clear confetti
 -- 4-line celebration
--- animated background scenes
 -- high score
 
 import "CoreLibs/object"
@@ -21,7 +20,27 @@ local upHoldTimer = nil
 
 local defaultFont
 
-local scenes = {}
+local scene = {}
+local songs = {}
+local songIndex = 1
+local songNames = {
+	"something_in_the_air",
+	"glad_to_be_stuck_inside",
+	"mundane",
+	"pretty_little_lies",
+	"shut_up_or_shut_in",
+	"yesterday",
+	"whatever",
+}
+
+local nextSong = function()
+	songs[songIndex]:stop()
+	songIndex = songIndex + 1
+	if songIndex > #songs then
+		songIndex = 1
+	end
+	songs[songIndex]:play(0)
+end
 
 local setup = function()
 	math.randomseed(playdate.getSecondsSinceEpoch())
@@ -29,18 +48,17 @@ local setup = function()
 	defaultFont = Gfx.font.new("fonts/krull")
 	Gfx.setFont(defaultFont)
 
-	scenes = {
-		Scene.create("something_in_the_air"),
-		Scene.create("glad_to_be_stuck_inside"),
-		Scene.create("mundane"),
-		Scene.create("pretty_little_lies"),
-		Scene.create("shut_up_or_shut_in"),
-		Scene.create("yesterday"),
-		Scene.create("whatever"),
-	}
+	scene = Scene.create()
+	scene:setup()
+
+	for i, songName in pairs(songNames) do
+		songs[i] = playdate.sound.fileplayer.new("music/" .. songName)
+		songs[i]:setVolume(0.5)
+	end
+	songs[songIndex]:play(0)
 
 	Tetromino:loadImages()
-	currentStage = Stage.create(scenes)
+	currentStage = Stage.create(nextSong)
 
 	local width, height = playdate.display.getSize()
 	local stageWidth = (currentStage.width * Tetromino.minoSize)
@@ -120,6 +138,8 @@ end
 
 playdate.update = function()
 	Gfx.clear()
+
+	scene:draw()
 
 	currentStage:draw()
 
