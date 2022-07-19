@@ -53,6 +53,9 @@ local stage = {
 			lineClearAnimation = Gfx.imagetable.new('images/clear.gif'),
 			lineClearIndex = 1,
 			lineClearAnimationTimer = nil,
+			bigLineClearAnimation = Gfx.imagetable.new('images/clearbig.gif'),
+			bigLineClearIndex = 1,
+			bigLineClearAnimationTimer = nil,
 
 			soundEffects = {
 				shift = playdate.sound.sampleplayer.new("sounds/shift"),
@@ -452,6 +455,11 @@ local stage = {
 					self.lineClearAnimationTimer = playdate.timer.new(24, function() self:nextLineClearFrame() end)
 					self.lineClearAnimationTimer.repeats = true
 				end
+				if lineCount >= 4 then
+					self.bigLineClearIndex = 1
+					self.bigLineClearAnimationTimer = playdate.timer.new(30, function() self:nextBigLineClearFrame() end)
+					self.bigLineClearAnimationTimer.repeats = true
+				end
 
 				self.score = self.score + score
 
@@ -622,6 +630,12 @@ local stage = {
 					lineClearImage:draw(-13, lineClearY)
 				end
 
+				if self.bigLineClearAnimationTimer ~= nil then
+					local bigLineClearImage = self.bigLineClearAnimation:getImage(self.bigLineClearIndex)
+					local bigLineClearY = (self.lastRowCleared - 3) * Tetromino.minoSize - 10
+					bigLineClearImage:draw(-13, bigLineClearY)
+				end
+
 			end,
 
 			nextLineClearFrame = function(self)
@@ -629,6 +643,14 @@ local stage = {
 				if self.lineClearIndex >= self.lineClearAnimation:getLength() then
 					self.lineClearAnimationTimer:remove()
 					self.lineClearAnimationTimer = nil
+				end
+			end,
+
+			nextBigLineClearFrame = function(self)
+				self.bigLineClearIndex = self.bigLineClearIndex + 1
+				if self.bigLineClearIndex >= self.bigLineClearAnimation:getLength() then
+					self.bigLineClearAnimationTimer:remove()
+					self.bigLineClearAnimationTimer = nil
 				end
 			end,
 
