@@ -37,8 +37,7 @@ local stage = {
 			holdDelay = 500,
 			isHardDropping = false,
 			isWaitingForHoldLock = false,
-			highestLine = 22,
-			prevHighestLine = 22,
+			lastRowCleared = 1,
 
 			isGameOver = false,
 			fillSpeed = 1,
@@ -50,6 +49,10 @@ local stage = {
 
 			levelLabelWidth = Gfx.getTextSize("LEVEL"),
 			holdLabelWidth = Gfx.getTextSize("HOLD"),
+
+			lineClearAnimation = Gfx.imagetable.new('images/clear.gif'),
+			lineClearIndex = 1,
+			lineClearAnimationTimer = nil,
 
 			soundEffects = {
 				shift = playdate.sound.sampleplayer.new("sounds/shift"),
@@ -75,8 +78,6 @@ local stage = {
 				self.combo = -1
 				self.linesCleared = 0
 				self.fourLinesCleared = 0
-				self.highestLine = 2
-				self.prevHighestLine = 22
 
 				self.tetromino = nil
 				self.hold = nil
@@ -370,23 +371,21 @@ local stage = {
 			end,
 
 			checkForLines = function(self)
-				self.prevHighestLine = self.highestLine
-				self.highestLine = self.height
 				local lineCount = 0
+				self.lastRowCleared = 1
 				for row = 3, self.height do
 					local isLine = true
 					for col = 1, self.width do
 						if self.tiles[row][col] == 0 then
 							isLine = false
-						else
-							if row < self.highestLine then
-								self.highestLine = row
-							end
 						end
 					end
 					if isLine then
 						self:clearLine(row)
 						lineCount = lineCount + 1
+						if row > self.lastRowCleared then
+							self.lastRowCleared = row
+						end
 					end
 				end
 				return lineCount
@@ -446,6 +445,12 @@ local stage = {
 						self.fourLinesCleared = 0
 						self:nextSong()
 					end
+				end
+
+				if lineCount >= 1 then
+					self.lineClearIndex = 1
+					self.lineClearAnimationTimer = playdate.timer.new(24, function() self:nextLineClearFrame() end)
+					self.lineClearAnimationTimer.repeats = true
 				end
 
 				self.score = self.score + score
@@ -609,6 +614,22 @@ local stage = {
 					end
 				end
 
+				playdate.graphics.clearClipRect()
+
+				if self.lineClearAnimationTimer ~= nil then
+					local lineClearImage = self.lineClearAnimation:getImage(self.lineClearIndex)
+					local lineClearY = (self.lastRowCleared - 3) * Tetromino.minoSize - 5
+					lineClearImage:draw(-13, lineClearY)
+				end
+
+			end,
+
+			nextLineClearFrame = function(self)
+				self.lineClearIndex = self.lineClearIndex + 1
+				if self.lineClearIndex >= self.lineClearAnimation:getLength() then
+					self.lineClearAnimationTimer:remove()
+					self.lineClearAnimationTimer = nil
+				end
 			end,
 
 			saveData = function(self)
