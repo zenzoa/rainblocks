@@ -636,6 +636,16 @@ local stage = {
 					bigLineClearImage:draw(-13, bigLineClearY)
 				end
 
+				if self.isGameOver then
+					local highScoreText = "HIGH SCORE\n" .. self.highScore
+					local highScoreW, highScoreH = playdate.graphics.getTextSize(highScoreText, nil, 4)
+					local highScoreX = displayWidth / 2 - math.floor(highScoreW / 2)
+					local highScoreY = displayHeight / 2 - math.floor(highScoreH / 2)
+					playdate.graphics.setColor(playdate.graphics.kColorWhite)
+					playdate.graphics.fillRoundRect(highScoreX - 4, highScoreY - 4, highScoreW + 8, highScoreH + 8, 4)
+					Gfx.drawTextAligned(highScoreText, displayWidth / 2, highScoreY, kTextAlignment.center, 4)
+				end
+
 			end,
 
 			nextLineClearFrame = function(self)
@@ -671,7 +681,7 @@ local stage = {
 					if data.mode ~= nil then
 						self:setMode(data.mode)
 					end
-					if data.level ~= nil then
+					if data.level ~= nil and data.mode == "chill" then
 						self:setLevel(data.level, true)
 						LevelOption:setValue(Stage.levelStrings[data.level])
 					end
