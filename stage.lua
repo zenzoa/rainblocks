@@ -51,11 +51,17 @@ local stage = {
 			holdLabelWidth = Gfx.getTextSize("HOLD"),
 
 			lineClearAnimation = Gfx.imagetable.new('images/clear.gif'),
-			lineClearIndex = 1,
 			lineClearAnimationTimer = nil,
+			lineClearIndex = 1,
+
 			bigLineClearAnimation = Gfx.imagetable.new('images/clearbig.gif'),
-			bigLineClearIndex = 1,
 			bigLineClearAnimationTimer = nil,
+			bigLineClearIndex = 1,
+
+			highScoreAnimation = Gfx.imagetable.new('images/highscore.gif'),
+			highScoreAnimationTimer = nil,
+			highScoreIndex = 1,
+			hasReachedHighScore = false,
 
 			soundEffects = {
 				shift = playdate.sound.sampleplayer.new("sounds/shift"),
@@ -81,6 +87,7 @@ local stage = {
 				self.combo = -1
 				self.linesCleared = 0
 				self.fourLinesCleared = 0
+				self.hasReachedHighScore = false
 
 				self.tetromino = nil
 				self.hold = nil
@@ -452,7 +459,7 @@ local stage = {
 
 				if lineCount >= 1 then
 					self.lineClearIndex = 1
-					self.lineClearAnimationTimer = playdate.timer.new(24, function() self:nextLineClearFrame() end)
+					self.lineClearAnimationTimer = playdate.timer.new(25, function() self:nextLineClearFrame() end)
 					self.lineClearAnimationTimer.repeats = true
 				end
 				if lineCount >= 4 then
@@ -464,7 +471,13 @@ local stage = {
 				self.score = self.score + score
 
 				if self.score > self.highScore then
+					if self.highScoreAnimationTimer == nil and not self.hasReachedHighScore then
+						self.highScoreIndex = 1
+						self.highScoreAnimationTimer = playdate.timer.new(30, function() self:nextHighScoreFrame() end)
+						self.highScoreAnimationTimer.repeats = true
+					end
 					self.highScore = self.score
+					self.hasReachedHighScore = true
 				end
 			end,
 
@@ -636,6 +649,16 @@ local stage = {
 					bigLineClearImage:draw(-13, bigLineClearY)
 				end
 
+				if self.highScoreAnimationTimer ~= nil then
+					local highScoreImage = self.highScoreAnimation:getImage(self.highScoreIndex)
+					local scoreWidth = playdate.graphics.getTextSize(self.score)
+					highScoreImage:draw(displayWidth + scoreWidth + 12, displayHeight - 17)
+				elseif self.hasReachedHighScore then
+					local highScoreImage = self.highScoreAnimation:getImage(4)
+					local scoreWidth = playdate.graphics.getTextSize(self.score)
+					highScoreImage:draw(displayWidth + scoreWidth + 12, displayHeight - 17)
+				end
+
 				if self.isGameOver then
 					local highScoreText = "HIGH SCORE\n" .. self.highScore
 					local highScoreW, highScoreH = playdate.graphics.getTextSize(highScoreText, nil, 4)
@@ -661,6 +684,14 @@ local stage = {
 				if self.bigLineClearIndex >= self.bigLineClearAnimation:getLength() then
 					self.bigLineClearAnimationTimer:remove()
 					self.bigLineClearAnimationTimer = nil
+				end
+			end,
+
+			nextHighScoreFrame = function(self)
+				self.highScoreIndex = self.highScoreIndex + 1
+				if self.highScoreIndex >= self.highScoreAnimation:getLength() then
+					self.highScoreAnimationTimer:remove()
+					self.highScoreAnimationTimer = nil
 				end
 			end,
 

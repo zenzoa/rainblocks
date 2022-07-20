@@ -1,8 +1,3 @@
--- TODO:
--- line clear confetti
--- 4-line celebration
--- high score
-
 import "CoreLibs/object"
 import "CoreLibs/graphics"
 import "CoreLibs/sprites"
