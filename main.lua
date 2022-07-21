@@ -91,7 +91,9 @@ end
 
 playdate.upButtonDown = function()
 	if currentStage.enableHold then
-		currentStage.tickTimer:pause()
+		if not currentStage.isWaitingForHoldLock then
+			currentStage.tickTimer:pause()
+		end
 		upHoldTimer = playdate.timer.performAfterDelay(currentStage.holdDelay, function()
 			currentStage:switchHold()
 		end)
@@ -101,6 +103,7 @@ playdate.upButtonDown = function()
 end
 
 playdate.upButtonUp = function()
+	currentStage.tickTimer._lastTime = nil
 	currentStage.tickTimer:start()
 	if currentStage.enableHold and upHoldTimer.timeLeft > 0 then
 		upHoldTimer:remove()
