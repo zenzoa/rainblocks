@@ -265,7 +265,7 @@ local stage = {
 			end,
 
 			switchHold = function(self)
-				if self.enableHold and not self.isWaitingForHoldLock then
+				if self.enableHold and not self.isWaitingForHoldLock and self.tetromino ~= nil then
 					self.isHardDropping = false
 					self.tickTimer.duration = self.speed
 					self.soundEffects.hold:play()
