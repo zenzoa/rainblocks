@@ -48,6 +48,7 @@ local setup = function()
 
 	for i, songName in pairs(songNames) do
 		songs[i] = playdate.sound.fileplayer.new("music/" .. songName)
+		songs[i]:setStopOnUnderrun(false)
 		songs[i]:setVolume(0.5)
 	end
 	songs[songIndex]:play(0)
