@@ -28,6 +28,11 @@ local songNames = {
 	"whatever",
 }
 
+local startMusic = function()
+	songIndex = 1
+	songs[songIndex]:play(0)
+end
+
 local nextSong = function()
 	songs[songIndex]:stop()
 	songIndex = songIndex + 1
@@ -35,6 +40,10 @@ local nextSong = function()
 		songIndex = 1
 	end
 	songs[songIndex]:play(0)
+end
+
+local stopMusic = function()
+	songs[songIndex]:stop()
 end
 
 local setup = function()
@@ -51,10 +60,9 @@ local setup = function()
 		songs[i]:setStopOnUnderrun(false)
 		songs[i]:setVolume(0.5)
 	end
-	songs[songIndex]:play(0)
 
 	Tetromino:loadImages()
-	currentStage = Stage.create(nextSong)
+	currentStage = Stage.create(startMusic, nextSong, stopMusic)
 
 	local width, height = playdate.display.getSize()
 	local stageWidth = (currentStage.width * Tetromino.minoSize)

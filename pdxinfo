@@ -2,5 +2,5 @@ name=Rainblocks
 author=Zenzoa
 description=A chill falling blocks game for the Playdate.
 bundleID=com.zenzoa.rainblocks
-version=1.0
+version=1.0.1
 imagePath=images

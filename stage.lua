@@ -3,9 +3,11 @@ local stage = {
 	levelStrings =	{	"01",	"02",	"03",	"04",	"05",	"06",	"07",	"08",	"09",	"10"	},
 	speeds =				{	1000,	793,	618,	473,	355,	262,	190,	135,	94,		64		},
 
-	create = function(nextSong)
+	create = function(startMusic, nextSong, stopMusic)
 		local s = {
+			startMusic = startMusic,
 			nextSong = nextSong,
+			stopMusic = stopMusic,
 
 			width = 10,
 			height = 22,
@@ -108,6 +110,8 @@ local stage = {
 
 				self:resetBag()
 
+				self:startMusic()
+
 				self.tickTimer = playdate.timer.new(self.speed, function() self:tick() end)
 				self.tickTimer.repeats = true
 			end,
@@ -115,6 +119,7 @@ local stage = {
 			gameOver = function(self)
 				self.isGameOver = true
 				self.soundEffects.gameOver:play()
+				self:stopMusic()
 				self.tickTimer:remove()
 				self.tetromino = nil
 
