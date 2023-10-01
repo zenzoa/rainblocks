@@ -600,50 +600,62 @@ local stage = {
 						self.scoreDisplay = math.min(self.score, self.scoreDisplay + 10)
 					end
 				end
-				Gfx.drawText("SCORE", displayWidth + 10, displayHeight - 26)
-				Gfx.drawText(self.scoreDisplay, displayWidth + 10, displayHeight - 10)
 
-				Gfx.drawText("LEVEL", -self.levelLabelWidth - 10, displayHeight - 26)
+				local _, pixOffset, _, _ = Gfx.getClipRect()
+				pixOffset = math.abs(pixOffset)
+
+				Gfx.drawText("SCORE", displayWidth + 10, playdate.display.getHeight() - pixOffset - 46)
+				Gfx.drawText(self.scoreDisplay, displayWidth + 10, playdate.display.getHeight() - pixOffset - 30)
+
+				Gfx.drawText("LEVEL", -self.levelLabelWidth - 10, playdate.display.getHeight() - pixOffset - 46)
 				self.levelTextWidth = Gfx.getTextSize(self.level)
-				Gfx.drawText(self.level, -self.levelTextWidth - 10, displayHeight - 10)
+				Gfx.drawText(self.level, -self.levelTextWidth - 10, playdate.display.getHeight() - pixOffset - 30)
 
 				if self.enablePreview then
 					playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillWhite)
-					Gfx.drawText("NEXT", displayWidth + 9, -1)
-					Gfx.drawText("NEXT", displayWidth + 9, 0)
-					Gfx.drawText("NEXT", displayWidth + 9, 1)
-					Gfx.drawText("NEXT", displayWidth + 11, -1)
-					Gfx.drawText("NEXT", displayWidth + 11, 0)
-					Gfx.drawText("NEXT", displayWidth + 11, 1)
-					Gfx.drawText("NEXT", displayWidth + 10, -1)
-					Gfx.drawText("NEXT", displayWidth + 10, 1)
+					Gfx.drawText("NEXT", displayWidth + 9, 20 - pixOffset - 1)
+					Gfx.drawText("NEXT", displayWidth + 9, 20 - pixOffset)
+					Gfx.drawText("NEXT", displayWidth + 9, 20 - pixOffset + 1)
+					Gfx.drawText("NEXT", displayWidth + 11, 20 - pixOffset - 1)
+					Gfx.drawText("NEXT", displayWidth + 11, 20 - pixOffset)
+					Gfx.drawText("NEXT", displayWidth + 11, 20 - pixOffset + 1)
+					Gfx.drawText("NEXT", displayWidth + 10, 20 - pixOffset - 1)
+					Gfx.drawText("NEXT", displayWidth + 10, 20 - pixOffset + 1)
 					playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeCopy)
-					Gfx.drawText("NEXT", displayWidth + 10, 0)
+					Gfx.drawText("NEXT", displayWidth + 10, 20 - pixOffset)
 				end
 
 				if self.enableHold then
 					playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeFillWhite)
-					Gfx.drawText("HOLD", -self.holdLabelWidth - 9, -1)
-					Gfx.drawText("HOLD", -self.holdLabelWidth - 9, 0)
-					Gfx.drawText("HOLD", -self.holdLabelWidth - 9, 1)
-					Gfx.drawText("HOLD", -self.holdLabelWidth - 11, -1)
-					Gfx.drawText("HOLD", -self.holdLabelWidth - 11, 0)
-					Gfx.drawText("HOLD", -self.holdLabelWidth - 11, 1)
-					Gfx.drawText("HOLD", -self.holdLabelWidth - 10, -1)
-					Gfx.drawText("HOLD", -self.holdLabelWidth - 10, 1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 9, 20 - pixOffset - 1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 9, 20 - pixOffset)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 9, 20 - pixOffset + 1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 11, 20 - pixOffset - 1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 11, 20 - pixOffset)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 11, 20 - pixOffset + 1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 10, 20 - pixOffset - 1)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 10, 20 - pixOffset + 1)
 					playdate.graphics.setImageDrawMode(playdate.graphics.kDrawModeCopy)
-					Gfx.drawText("HOLD", -self.holdLabelWidth - 10, 0)
+					Gfx.drawText("HOLD", -self.holdLabelWidth - 10, 20 - pixOffset)
 				end
 
 				if self.enablePreview and self.preview then
 					self.preview.x = self.width + 2
-					self.preview.y = 5
+					if (pixOffset > 0) then
+						self.preview.y = 5
+					else
+						self.preview.y = 6
+					end
 					self.preview:draw(true)
 				end
 
 				if self.enableHold and self.hold then
 					self.hold.x = -Tetromino.width[self.hold.type]
-					self.hold.y = 5
+					if (pixOffset > 0) then
+						self.hold.y = 5
+					else
+						self.hold.y = 6
+					end
 					self.hold:draw(true)
 				end
 
