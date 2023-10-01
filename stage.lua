@@ -1,7 +1,28 @@
 local stage = {
-	maxLevel = 10,
-	levelStrings =	{	"01",	"02",	"03",	"04",	"05",	"06",	"07",	"08",	"09",	"10"	},
-	speeds =				{	1000,	793,	618,	473,	355,	262,	190,	135,	94,		64		},
+	maxLevel = 20,
+	levelStrings =	{},
+	-- These speeds are from https://tetris.wiki/Marathon
+	-- They are in rows per frame, at 60 frames per second
+	speeds =	{	0.01667 * 60,
+				0.021017 * 60,
+				0.026977 * 60,
+				0.035256 * 60,
+				0.04693 * 60,
+				0.06361 * 60,
+				0.0879 * 60,
+				0.1236 * 60,
+				0.1775 * 60,
+				0.2598 * 60,
+				0.388 * 60,
+				0.59 * 60,
+				0.92 * 60,
+				1.46 * 60,
+				2.36 * 60,
+				3.91 * 60,
+				6.61 * 60,
+				11.43 * 60,
+				20 * 60
+			},
 
 	create = function(startMusic, nextSong, stopMusic)
 		local s = {
@@ -32,11 +53,14 @@ local stage = {
 			fourLinesCleared = 0,
 			level = 1,
 
-			speed = 1000,
-			lockDelay = 500,
-			lockTimer = nil,
 			tickTimer = nil,
-			holdDelay = 500,
+			tickRate = 10,		-- in ms
+			speed = nil,
+			timeDropping = 0,
+			accumulatedTime = 0,
+			lockDelay = 500,	-- in ms
+			lockTimer = nil,
+			holdDelay = 500,	-- in ms
 			isHardDropping = false,
 			isWaitingForHoldLock = false,
 			lastRowCleared = 1,
@@ -47,7 +71,7 @@ local stage = {
 			fillRow = 22,
 			fillCol = 1,
 
-			mode = "dynamic",
+			mode = "marathon",
 
 			levelLabelWidth = Gfx.getTextSize("LEVEL"),
 			holdLabelWidth = Gfx.getTextSize("HOLD"),
@@ -82,6 +106,7 @@ local stage = {
 			},
 
 			setup = function(self)
+				self.speed = Stage.speeds[self.level] / self.tickRate
 				self.isGameOver = false
 
 				self.score = 0
@@ -112,7 +137,7 @@ local stage = {
 
 				self:startMusic()
 
-				self.tickTimer = playdate.timer.new(self.speed, function() self:tick() end)
+				self.tickTimer = playdate.timer.new(self.tickRate, function() self:tick() end)
 				self.tickTimer.repeats = true
 			end,
 
@@ -148,10 +173,7 @@ local stage = {
 
 					self.level = level
 
-					self.speed = Stage.speeds[level]
-					if self.tickTimer then
-						self.tickTimer.duration = self.speed
-					end
+					self.speed = Stage.speeds[self.level] / self.tickRate
 
 					if not setManually then
 						LevelOption:setValue(Stage.levelStrings[level])
@@ -187,10 +209,13 @@ local stage = {
 					y = 1
 				end
 
+				self.accumulatedTime = 0
 				self.tetromino = Tetromino.create(type, x, y)
 				if self.tetromino:checkCollision(self, 0, 0) then
 					self:gameOver()
 				else
+					self.accumulatedTime = 0
+					self.timeDropping = 0
 					if self.enableGhost then
 						self.ghost = Tetromino.create(type, x, y)
 						self.ghost.isGhost = true
@@ -251,14 +276,14 @@ local stage = {
 			startSoftDrop = function(self)
 				if self.tetromino then
 					self.soundEffects.softDrop:play(0)
-					self.tickTimer.duration = math.floor(self.speed / 20)
+					self.speed *= 20
 				end
 			end,
 
 			stopSoftDrop = function(self)
 				if self.tetromino then
 					self.soundEffects.softDrop:stop()
-					self.tickTimer.duration = self.speed
+					self.speed /= 20
 				end
 			end,
 
@@ -488,16 +513,26 @@ local stage = {
 			tick = function(self)
 				if self.tetromino then
 
-					local success = false
+					local dropped = false
+					local landed = false
 					if self.isHardDropping then
 						while self.tetromino:moveDown(self) do
 							-- nothing, we're hard-dropping until we hit the bottom
 						end
 					else
-						success = self.tetromino:moveDown(self)
+						self.accumulatedTime += self.speed
+						-- Track time for when a tetronimo will decend more than one row per frame
+						if self.accumulatedTime > 1 then
+							-- If moveDown fails, we've landed
+							dropped = self.tetromino:moveDown(self)
+							if not dropped then
+								landed = true
+							end
+							self.accumulatedTime -= 1
+						end
 					end
 
-					if success then
+					if dropped then
 						if self.lockTimer then
 							self.lockTimer:remove()
 							self.lockTimer = nil
@@ -506,8 +541,9 @@ local stage = {
 						local lockDelay = self.lockDelay
 						if self.isHardDropping then
 							lockDelay = 1
-						else
+						elseif landed then
 							self.soundEffects.land:play()
+							landed = false
 						end
 						self.lockTimer = playdate.timer.new(lockDelay, function() self:lock() end)
 					end
