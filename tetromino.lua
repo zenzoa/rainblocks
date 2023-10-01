@@ -1,5 +1,5 @@
 local tetromino = {
-	minoSize = 10,
+	minoSize = 12,
 
 	types = {
 		"I",

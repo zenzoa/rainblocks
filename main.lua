@@ -72,9 +72,12 @@ local setup = function()
 	Gfx.setDrawOffset(offsetX, offsetY)
 
 	local menu = playdate.getSystemMenu()
-	ModeOption = menu:addOptionsMenuItem("mode", { "regular", "dynamic", "chill" }, currentStage.mode, function(option)
+	ModeOption = menu:addOptionsMenuItem("mode", { "marathon", "dynamic", "chill" }, currentStage.mode, function(option)
 		currentStage:setMode(option)
 	end)
+	for l = 1, Stage.maxLevel, 1 do
+		table.insert(Stage.levelStrings, string.format("%02d", l))
+	end
 	LevelOption = menu:addOptionsMenuItem("level", Stage.levelStrings, Stage.levelStrings[1], function(option)
 		currentStage:setLevel(math.tointeger(option), true)
 	end)
