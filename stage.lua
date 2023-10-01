@@ -174,10 +174,6 @@ local stage = {
 					self.level = level
 
 					self.speed = Stage.speeds[self.level] / self.tickRate
-
-					if not setManually then
-						LevelOption:setValue(Stage.levelStrings[level])
-					end
 				end
 			end,
 
